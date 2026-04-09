@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brand Guard & Domain Scout</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #111934;
+      --muted: #cad5ef;
+      --border: #27335b;
+      --accent: #9bc0ff;
+      --success: #72e0a6;
+      --warning: #ffd28d;
+      --danger: #ff8f8f;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #eef3ff; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 40px 20px 64px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 28px; margin-bottom: 18px; box-shadow: 0 12px 32px rgba(0,0,0,.2); }
+    h1 { font-size: 44px; margin: 0 0 12px; }
+    h2 { margin-top: 0; font-size: 24px; }
+    p, li, label, td, th { color: var(--muted); line-height: 1.6; }
+    .pill { display:inline-block; padding:6px 10px; border-radius:999px; background:#1d2850; color:var(--accent); font-size:12px; margin-bottom:12px; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+    .mini { background:#0c1430; border:1px solid #243052; border-radius:16px; padding:18px; }
+    input, textarea, button { width: 100%; box-sizing: border-box; border-radius: 14px; border: 1px solid #31406f; padding: 14px 16px; font-size: 16px; }
+    input, textarea { background:#0c1430; color:#eef3ff; margin-top: 8px; }
+    textarea { min-height: 90px; resize: vertical; }
+    button { background:var(--success); color:#062313; font-weight:700; cursor:pointer; margin-top: 16px; }
+    .warning { color:var(--warning); font-size: 14px; }
+    .muted { color:#92a6d8; font-size:14px; }
+    .demo-banner { background: rgba(255, 210, 141, 0.12); border: 1px solid rgba(255, 210, 141, 0.45); color: var(--warning); border-radius: 16px; padding: 14px 16px; margin-top: 16px; font-weight: 600; }
+    .live-banner { background: rgba(114, 224, 166, 0.12); border: 1px solid rgba(114, 224, 166, 0.45); color: var(--success); border-radius: 16px; padding: 14px 16px; margin-top: 16px; font-weight: 600; display:none; }
+    .result-shell { display:none; }
+    .hero-result { display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+    .score-box { min-width: 220px; background:#0c1430; border:1px solid #243052; border-radius:18px; padding:18px; }
+    .score-box strong { display:block; font-size: 34px; margin-top: 8px; }
+    .risk-low { color: var(--success); }
+    .risk-medium { color: var(--warning); }
+    .risk-high { color: var(--danger); }
+    .tag { display:inline-block; padding:6px 10px; border-radius:999px; background:#172245; color:#d9e5ff; font-size:12px; margin: 4px 6px 0 0; }
+    table { width:100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { text-align:left; padding: 10px 0; border-bottom: 1px solid #223055; }
+    .alt-card { background:#0c1430; border:1px solid #243052; border-radius:16px; padding:16px; }
+    details { margin-top: 12px; }
+    summary { cursor: pointer; color: var(--accent); }
+    pre { background:#0a132b; color:#dbe6ff; border-radius:14px; padding:16px; overflow:auto; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <span class="pill">Founder-friendly brand screening</span>
+      <h1>Brand Guard & Domain Scout</h1>
+      <p>Check whether a name looks usable before you fall in love with it. Review trademark risk, DNS-level domain signals, and better fallback variations in one pass.</p>
+      <p class="warning">This is an early screening tool, not legal advice. Always verify with a trademark attorney and registrar before launch.</p>
+      <div class="demo-banner" id="topDemoBanner">Demo mode is active. Results shown here are simulated examples until the live backend is connected.</div>
+      <div class="live-banner" id="topLiveBanner">Live backend connected. Results now come from the active screening API.</div>
+    </div>
+
+    <div class="card">
+      <h2>Search a potential brand</h2>
+      <label>
+        Brand name
+        <input id="brandName" placeholder="Clawbot" />
+      </label>
+      <label>
+        Industry keywords
+        <textarea id="keywords" placeholder="ai, saas, automation"></textarea>
+      </label>
+      <button id="runCheck">Check brand viability</button>
+      <p class="muted" id="modeHint">Current mode: polished frontend with demo data contract. Live backend connection is the next step.</p>
+      <div class="demo-banner" id="formDemoBanner">You are not seeing live USPTO or live domain lookup results yet. This screen is for product flow validation only.</div>
+      <div class="live-banner" id="formLiveBanner">This form is using live backend data.</div>
+    </div>
+
+    <div id="resultShell" class="card result-shell">
+      <div class="demo-banner" id="resultModeBanner">Demo result. Live data is not connected yet.</div>
+      <div class="live-banner" id="resultLiveBanner">Live data result.</div>
+      <div class="hero-result">
+        <div class="score-box">
+          <div class="muted">Risk level</div>
+          <strong id="riskLevel">-</strong>
+          <div class="muted" style="margin-top:8px;">Safety score: <span id="safetyScore">-</span>/100</div>
+          <div class="muted">Confidence: <span id="confidenceLevel">-</span></div>
+        </div>
+        <div style="flex:1; min-width:280px;">
+          <h2 id="decisionTitle" style="margin-bottom:8px;">Decision summary</h2>
+          <p id="decisionSummary"></p>
+          <div id="blockingReasons" style="margin-top:12px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="domainsCard" class="card result-shell">
+      <h2>Digital availability</h2>
+      <table>
+        <thead><tr><th>Domain</th><th>Status</th></tr></thead>
+        <tbody id="domainsTable"></tbody>
+      </table>
+      <p class="muted">Status is shown in user-friendly language. Right now it is still inferred from DNS behavior, not registrar-confirmed.</p>
+    </div>
+
+    <div id="conflictsCard" class="card result-shell">
+      <h2>Trademark conflicts</h2>
+      <div id="conflictsList"></div>
+    </div>
+
+    <div id="alternativesCard" class="card result-shell">
+      <h2>Safer alternatives</h2>
+      <div id="alternativesGrid" class="grid"></div>
+    </div>
+
+    <div id="detailsCard" class="card result-shell">
+      <details>
+        <summary>Developer details</summary>
+        <pre id="rawJson"></pre>
+      </details>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://brand-guard-domain-scout-api.onrender.com';
+    const resultShells = document.querySelectorAll('.result-shell');
+    const button = document.getElementById('runCheck');
+    let liveMode = false;
+
+    function normalizeBrand(name) {
+      return name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function humanizeReason(reason) {
+      return reason.replace(/_/g, ' ');
+    }
+
+    function humanizeDomainStatus(status) {
+      if (status === 'Resolvable') return 'Likely Registered';
+      if (status === 'Not Resolvable') return 'Likely Unregistered';
+      return 'Unknown';
+    }
+
+    function setMode(isLive) {
+      liveMode = isLive;
+      document.getElementById('topDemoBanner').style.display = isLive ? 'none' : 'block';
+      document.getElementById('formDemoBanner').style.display = isLive ? 'none' : 'block';
+      document.getElementById('resultModeBanner').style.display = isLive ? 'none' : 'block';
+      document.getElementById('topLiveBanner').style.display = isLive ? 'block' : 'none';
+      document.getElementById('formLiveBanner').style.display = isLive ? 'block' : 'none';
+      document.getElementById('resultLiveBanner').style.display = isLive ? 'block' : 'none';
+      document.getElementById('modeHint').textContent = isLive
+        ? 'Current mode: live backend connection.'
+        : 'Current mode: polished frontend with demo data contract. Live backend connection is the next step.';
+    }
+
+    function demoResponse(brandName, keywords) {
+      const base = normalizeBrand(brandName || 'brand');
+      const medium = ['ai', 'saas', 'software', 'automation'].some(k => keywords.includes(k));
+      return {
+        brand_name: brandName,
+        relevant_nice_classes: medium ? [9, 42] : [9, 35, 42],
+        risk_level: medium ? 'Medium' : 'Low',
+        safety_score: medium ? 68 : 79,
+        confidence_level: 'Medium',
+        blocking_reasons: medium ? ['registrar_unverified', 'active_phonetic_or_fuzzy_conflict'] : ['registrar_unverified'],
+        digital_availability: {
+          [`${base}.com`]: 'Resolvable',
+          [`${base}.ai`]: 'Not Resolvable',
+          [`${base}.io`]: 'Unknown',
+          [`${base}.co`]: 'Not Resolvable'
+        },
+        registrar_availability_verified: false,
+        trademark_conflicts: medium ? [
+          {
+            mark: `${brandName} Labs`,
+            status: 'LIVE',
+            classes: [9, 42],
+            source: 'Demo placeholder',
+            similarity: 0.82,
+            phonetic_similarity: 0.88,
+            conflict_score: 0.88,
+            active: true,
+            conflict_type: 'likelihood_of_confusion'
+          }
+        ] : [],
+        launch_readiness_report: {
+          summary: medium
+            ? `${brandName} shows medium risk in the demo flow. One similar active mark appears and domain purchase availability is still unverified.`
+            : `${brandName} looks more promising in the demo flow, but legal and registrar verification are still required.`,
+          recommendation: medium
+            ? 'Proceed carefully. Use legal review and registrar verification before launch.'
+            : 'Promising early signal. Verify legal and registrar details before committing.',
+          requires_legal_review: true,
+          requires_registrar_check: true
+        },
+        suggested_variations: [
+          {
+            candidate: `get${base}`,
+            risk_level: 'Low',
+            digital_availability: {
+              [`get${base}.com`]: 'Not Resolvable',
+              [`get${base}.ai`]: 'Not Resolvable',
+              [`get${base}.io`]: 'Unknown',
+              [`get${base}.co`]: 'Not Resolvable'
+            }
+          },
+          {
+            candidate: `${base}labs`,
+            risk_level: 'Medium',
+            digital_availability: {
+              [`${base}labs.com`]: 'Resolvable',
+              [`${base}labs.ai`]: 'Not Resolvable',
+              [`${base}labs.io`]: 'Not Resolvable',
+              [`${base}labs.co`]: 'Unknown'
+            }
+          }
+        ],
+        notes: [
+          'Demo mode is active until the backend API is deployed.',
+          'This result shape matches the planned service contract.'
+        ]
+      };
+    }
+
+    async function fetchLiveResult(brandName, keywords) {
+      const response = await fetch(`${API_BASE}/brand-check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ brand_name: brandName, industry_keywords: keywords })
+      });
+      if (!response.ok) throw new Error(`API error ${response.status}`);
+      return await response.json();
+    }
+
+    function renderResult(data) {
+      resultShells.forEach(el => el.style.display = 'block');
+
+      const riskLevel = document.getElementById('riskLevel');
+      riskLevel.textContent = data.risk_level;
+      riskLevel.className = '';
+      riskLevel.classList.add(`risk-${data.risk_level.toLowerCase()}`);
+      document.getElementById('safetyScore').textContent = data.safety_score;
+      document.getElementById('confidenceLevel').textContent = data.confidence_level;
+      document.getElementById('decisionSummary').textContent = data.launch_readiness_report.summary;
+
+      const blocking = document.getElementById('blockingReasons');
+      blocking.innerHTML = '<div class="muted">Blocking reasons</div>' + data.blocking_reasons.map(reason => `<span class="tag">${humanizeReason(reason)}</span>`).join('');
+
+      const domainsTable = document.getElementById('domainsTable');
+      domainsTable.innerHTML = Object.entries(data.digital_availability)
+        .map(([domain, status]) => `<tr><td>${domain}</td><td>${humanizeDomainStatus(status)}</td></tr>`).join('');
+
+      const conflictsList = document.getElementById('conflictsList');
+      if (!data.trademark_conflicts.length) {
+        conflictsList.innerHTML = '<p>No strong conflict surfaced in this run.</p>';
+      } else {
+        conflictsList.innerHTML = data.trademark_conflicts.map(conflict => `
+          <div class="mini" style="margin-top:12px;">
+            <strong>${conflict.mark}</strong><br/>
+            Status: ${conflict.status || 'Unknown'}<br/>
+            Conflict type: ${humanizeReason(conflict.conflict_type)}<br/>
+            Score: ${conflict.conflict_score}
+          </div>
+        `).join('');
+      }
+
+      const alternativesGrid = document.getElementById('alternativesGrid');
+      alternativesGrid.innerHTML = data.suggested_variations.map(alt => `
+        <div class="alt-card">
+          <strong>${alt.candidate}</strong><br/>
+          Risk: ${alt.risk_level}<br/>
+          <div class="muted" style="margin-top:8px;">${Object.entries(alt.digital_availability).map(([domain, status]) => `${domain}: ${humanizeDomainStatus(status)}`).join('<br/>')}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('rawJson').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function detectLiveMode() {
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        setMode(response.ok);
+      } catch {
+        setMode(false);
+      }
+    }
+
+    button.addEventListener('click', async () => {
+      const brandName = document.getElementById('brandName').value.trim();
+      const keywords = document.getElementById('keywords').value.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
+      if (!brandName) {
+        alert('Enter a brand name first.');
+        return;
+      }
+      button.textContent = 'Checking...';
+      button.disabled = true;
+      try {
+        let data;
+        if (liveMode) {
+          data = await fetchLiveResult(brandName, keywords);
+        } else {
+          data = demoResponse(brandName, keywords);
+        }
+        renderResult(data);
+      } catch {
+        setMode(false);
+        renderResult(demoResponse(brandName, keywords));
+      } finally {
+        button.textContent = 'Check brand viability';
+        button.disabled = false;
+      }
+    });
+
+    detectLiveMode();
+  </script>
+</body>
+</html>
